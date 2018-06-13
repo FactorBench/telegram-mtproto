@@ -6,7 +6,6 @@
 *.*~
 *.swp
 
-lib/**
 es/**
 dist/**
 debug.log

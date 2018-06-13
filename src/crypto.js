@@ -12,7 +12,7 @@ import { convertToUint8Array, sha1HashSync, sha256HashSync,
   pqPrimeFactorization, bytesModPow } from './bin'
 
 const convertIfArray = when(is(Array), convertToUint8Array)
-let webWorker = !isNode
+let webWorker = null // !isNode
 let taskID = 0
 const awaiting = {}
 const webCrypto = isNode
