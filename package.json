@@ -37,8 +37,7 @@
     "pako": "^1.0.4",
     "ramda": "^0.23.0",
     "randombytes": "^2.0.3",
-    "rusha": "^0.8.5",
-    "worker-loader": "^0.8.0"
+    "rusha": "^0.8.5"
   },
   "devDependencies": {
     "@types/debug": "0.0.29",

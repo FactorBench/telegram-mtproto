@@ -7,17 +7,17 @@ import prop from 'ramda/src/prop'
 const sslSubdomains = ['pluto', 'venus', 'aurora', 'vesta', 'flora']
 
 const devDC = [
-  { id: 1, host: '149.154.175.10',  port: 80 },
-  { id: 2, host: '149.154.167.40',  port: 80 },
-  { id: 3, host: '149.154.175.117', port: 80 }
+  { id: 1, host: '149.154.175.10',  port: 443 },
+  { id: 2, host: '149.154.167.40',  port: 443 },
+  { id: 3, host: '149.154.175.117', port: 443 }
 ]
 
 const prodDC = [
-  { id: 1, host: '149.154.175.50',  port: 80 },
-  { id: 2, host: '149.154.167.51',  port: 80 },
-  { id: 3, host: '149.154.175.100', port: 80 },
-  { id: 4, host: '149.154.167.91',  port: 80 },
-  { id: 5, host: '149.154.171.5',   port: 80 }
+  { id: 1, host: '149.154.175.50',  port: 443 },
+  { id: 2, host: '149.154.167.50',  port: 443 },
+  { id: 3, host: '149.154.175.100', port: 443 },
+  { id: 4, host: '149.154.167.91',  port: 443 },
+  { id: 5, host: '149.154.171.5',   port: 443 }
 ]
 
 const portString = ({ port = 80 }) => port === 80

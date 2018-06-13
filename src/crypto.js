@@ -12,8 +12,7 @@ import { convertToUint8Array, sha1HashSync, sha256HashSync,
   pqPrimeFactorization, bytesModPow } from './bin'
 
 const convertIfArray = when(is(Array), convertToUint8Array)
-let webWorker = null // !isNode
-let taskID = 0
+const taskID = 0
 const awaiting = {}
 const webCrypto = isNode
   ? false
@@ -33,51 +32,7 @@ const finalizeTask = (taskID, result) => {
   }                          //    deferred = Promise.resolve()
 }                            //    deferred.resolve( result )
 
-const isCryptoTask = both(has('taskID'), has('result'))
-
 //eslint-disable-next-line
-const workerEnable = !isNode && window.Worker
-if (workerEnable) {
-  const TmpWorker = require('worker-loader?inline!./worker.js')
-  const tmpWorker = new TmpWorker()
-  // tmpWorker.onmessage = function(event) {
-  //   console.info('CW tmpWorker.onmessage', event && event.data)
-  // }
-  tmpWorker.onmessage = e => {
-    if (e.data === 'ready') {
-      console.info('CW ready')
-    } else if (!isCryptoTask(e.data)) {
-      console.info('Not crypto task', e, e.data)
-      return e
-    } else
-    return webWorker
-      ? finalizeTask(e.data.taskID, e.data.result)
-      : webWorker = tmpWorker
-  }
-
-  tmpWorker.onerror = function(error) {
-    console.error('CW error', error, error.stack)
-    webWorker = false
-  }
-  tmpWorker.postMessage('b')
-  webWorker = tmpWorker
-}
-
-const performTaskWorker = (task, params, embed) => {
-  // console.log(rework_d_T(), 'CW start', task)
-  const deferred = blueDefer()
-
-  awaiting[taskID] = deferred
-
-  params.task = task
-  params.taskID = taskID
-  ;(embed || webWorker).postMessage(params)
-
-  taskID++
-
-  return deferred.promise
-}
-
 const sha1Hash = bytes => {
   if (useSha1Crypto) {
     // We don't use buffer since typedArray.subarray(...).buffer gives the whole buffer and not sliced one.
@@ -120,18 +75,10 @@ const aesDecrypt = (encryptedBytes, keyBytes, ivBytes) =>
 
 const factorize = bytes => {
   bytes = convertToByteArray(bytes)
-  return webWorker
-    ? performTaskWorker('factorize', { bytes })
-    : smartTimeout.immediate(pqPrimeFactorization, bytes)
+  return smartTimeout.immediate(pqPrimeFactorization, bytes)
 }
 
-const modPow = (x, y, m) => webWorker
-  ? performTaskWorker('mod-pow', {
-    x,
-    y,
-    m
-  })
-  : smartTimeout.immediate(bytesModPow, x, y, m)
+const modPow = (x, y, m) => smartTimeout.immediate(bytesModPow, x, y, m)
 
 export const CryptoWorker = {
   sha1Hash,
