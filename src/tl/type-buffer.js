@@ -160,7 +160,7 @@ export class TypeBuffer {
   constructor(buffer: Buffer) {
     this.buffer = buffer
     this.intView = toUint32(buffer)
-    this.byteView = new Uint8Array(buffer)
+    this.byteView = Array.from(new Uint8Array(buffer)) // fix TypeBuffer
   }
 
   nextByte() {
@@ -179,7 +179,7 @@ export class TypeBuffer {
     return [ int1, int2 ]
   }
   next(length: number) {
-    const result = this.byteView.subarray(this.offset, this.offset + length)
+    const result = this.byteView.slice(this.offset, this.offset + length)
     this.offset += length
     return result
   }
