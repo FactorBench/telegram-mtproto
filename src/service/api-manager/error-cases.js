@@ -22,7 +22,7 @@ const protect = (
 
 const patterns = {
   noBaseAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID === base && type !== 'SESSION_PASSWORD_NEEDED',
-  noDcAuth  : ({ code, dcID, base })  =>  code === 401 && dcID !== base,
+  noDcAuth  : ({ code, dcID, base, type })  =>  code === 401 && dcID !== base && type === 'AUTH_KEY_UNREGISTERED',
   waitFail  : ({ code, type, errR })  =>  !errR && (code === 500 || type === 'MSG_WAIT_FAILED'),
   _         : ()                      =>  true
 }
