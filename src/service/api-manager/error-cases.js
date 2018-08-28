@@ -22,9 +22,10 @@ const protect = (
 
 const patterns = {
   noBaseAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID === base && type !== 'SESSION_PASSWORD_NEEDED',
-  noDcAuth  : ({ code, dcID, base, type })  =>  code === 401 && dcID !== base && type === 'AUTH_KEY_UNREGISTERED',
-  waitFail  : ({ code, type, errR })  =>  !errR && (code === 500 || type === 'MSG_WAIT_FAILED'),
-  _         : ()                      =>  true
+  noDcAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID !== base,// && type === 'AUTH_KEY_UNREGISTERED',
+  waitFail: ({ code, type, errR })  =>  !errR && (code === 500 || type === 'MSG_WAIT_FAILED'),
+  fileMigrate: ({ code, type }) => code === 303 && type.slice(0, -1) === 'FILE_MIGRATE_',
+  _ : () => true
 }
 
 
@@ -69,15 +70,10 @@ const noDcAuth = ({ dcID, reject, apiSavedNet, apiRecall, deferResolve, invoke }
     { id, bytes },
     { dcID, noErrorBox: true })
 
-
   if (isNil(cachedExportPromise[dcID])) {
     const exportDeferred = blueDefer()
 
-    invoke(
-      'auth.exportAuthorization',
-      { dc_id: dcID },
-      { noErrorBox: true })
-
+    invoke('auth.exportAuthorization', { dc_id: dcID }, { noErrorBox: true })
       .then(importAuth)
       .then(exportDeferred.resolve)
       .catch(exportDeferred.reject)
@@ -85,13 +81,15 @@ const noDcAuth = ({ dcID, reject, apiSavedNet, apiRecall, deferResolve, invoke }
     cachedExportPromise[dcID] = exportDeferred.promise
   }
 
-
-
   cachedExportPromise[dcID] //TODO not returning promise
     .then(apiSavedNet)
     .then(apiRecall)
     .then(deferResolve)
     .catch(reject)
+}
+
+const fileMigrate = () => {
+
 }
 /*
 const migrate = ({ error, dcID, options, reject,

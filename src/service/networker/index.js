@@ -195,6 +195,9 @@ export class NetworkerThread {
   }
 
   wrapApiCall(method: string, params: Object, options: NetOptions) {
+    console.log('[WrapApiCall]', method)
+    console.log('[WrapApiCall]', params)
+    console.log('[WrapApiCall]', options)
     const serializer = this.Serialization(options)
     const serialBox = serializer.writer
     if (!this.connectionInited) {

@@ -120,7 +120,7 @@ export class ApiManager {
     //   : this.cache.downloader
 
     const cache = this.cache.downloader
-    if (!dcID) dcID = 2//throw new Error('get Networker without dcID')
+    if (!dcID) throw new Error('get Networker without dcID')
 
     if (has(dcID, cache)) return cache[dcID]
 

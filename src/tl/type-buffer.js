@@ -66,7 +66,7 @@ const writeIntLogger = log('writeInt')
 
 const writeIntLog = (i: number, field: string) => {
   const hex = i && i.toString(16) || 'UNDEF'
-  writeIntLogger(hex, i, field)
+  //writeIntLogger(hex, i, field)
 }
 
 export class TypeWriter {

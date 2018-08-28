@@ -33,6 +33,7 @@ class Request {
     this.error420 = this.error420.bind(this)
     this.initNetworker = this.initNetworker.bind(this)
   }
+
   initNetworker = (): Promise<NetworkerType> => {
     if (!this.config.networker) {
       const { getNetworker, netOpts, dc } = this.config
@@ -41,12 +42,17 @@ class Request {
     }
     return Promise.resolve(this.config.networker)
   }
+
   saveNetworker = (networker: NetworkerType) => this.config.networker = networker
+  
   performRequest = () => this.initNetworker().then(this.requestWith)
-  requestWith = (networker: NetworkerType) => networker
+  
+  requestWith = (networker: NetworkerType) =>
+    networker
     .wrapApiCall(this.method, this.params, this.config.netOpts)
     .catch({ code: 303 }, this.error303)
     .catch({ code: 420 }, this.error420)
+
   error303(err: MTError) {
     const matched = err.type.match(/^(PHONE_MIGRATE_|NETWORK_MIGRATE_|USER_MIGRATE_)(\d+)/)
     if (!matched || matched.length < 2) return Promise.reject(err)
@@ -62,6 +68,7 @@ class Request {
     //NOTE Shouldn't we must reassign current networker/cachedNetworker?
     return this.performRequest()
   }
+
   error420(err: MTError) {
     const matched = err.type.match(/^FLOOD_WAIT_(\d+)/)
     if (!matched || matched.length < 2) return Promise.reject(err)
