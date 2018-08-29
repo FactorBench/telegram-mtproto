@@ -17,6 +17,10 @@ type Options = {|
   netOpts: mixed
 |}
 
+Promise.config({
+  monitoring: true
+})
+
 class Request {
   method: string
   params: { [arg: string]: mixed }
@@ -35,8 +39,10 @@ class Request {
   }
 
   initNetworker = (): Promise<NetworkerType> => {
+    console.log('[InitNetworker] this.config.dc =', this.config.dc)
     if (!this.config.networker) {
       const { getNetworker, netOpts, dc } = this.config
+      console.log('[InitNetworker] this.config.dc =', this.config.dc)
       return getNetworker(dc, netOpts)
         .then(this.saveNetworker)
     }
@@ -45,15 +51,25 @@ class Request {
 
   saveNetworker = (networker: NetworkerType) => this.config.networker = networker
   
-  performRequest = () => this.initNetworker().then(this.requestWith)
+  performRequest = () => {
+    console.log('[PerformRequest] this.config.dc = ', this.config.dc)
+    return this.initNetworker().then(this.requestWith)
+  }
   
-  requestWith = (networker: NetworkerType) =>
-    networker
+  requestWith = (networker: NetworkerType) => {
+    console.log('[RequestWith] this.config.dc = ', this.config.dc)
+    console.log('[RequestWith] this.config.netOpts = ', this.config.netOpts)
+    this.config.netOpts.dcID = this.config.dc
+    return networker
     .wrapApiCall(this.method, this.params, this.config.netOpts)
     .catch({ code: 303 }, this.error303)
     .catch({ code: 420 }, this.error420)
+  }
 
   error303(err: MTError) {
+    console.log('[Error303]', err)
+    console.log('[Error303]', err instanceof Error)
+    console.log('[Error303] this.config.dc =', this.config.dc)
     const matched = err.type.match(/^(PHONE_MIGRATE_|NETWORK_MIGRATE_|USER_MIGRATE_)(\d+)/)
     if (!matched || matched.length < 2) return Promise.reject(err)
     const [ , , newDcID] = matched
@@ -66,10 +82,13 @@ class Request {
       await this.config.storage.set('dc', newDcID)*/
     //TODO There is disabled ability to change default DC
     //NOTE Shouldn't we must reassign current networker/cachedNetworker?
+    console.log('[Error303] this.config.dc =', this.config.dc)
     return this.performRequest()
   }
 
   error420(err: MTError) {
+    console.log('[Error420]', err)
+    console.log('[Error420]', err instanceof Error)
     const matched = err.type.match(/^FLOOD_WAIT_(\d+)/)
     if (!matched || matched.length < 2) return Promise.reject(err)
     const [ , waitTime ] = matched

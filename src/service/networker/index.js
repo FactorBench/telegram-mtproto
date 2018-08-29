@@ -921,13 +921,13 @@ export class NetworkerThread {
         const deferred = sentMessage.deferred
         if (message.result._ == 'rpc_error') {
           const error = this.processError(message.result)
-          log(`ERROR, Rpc error`)('%O', error)
+          log(`ERROR, Rpc error`)(error)
           if (deferred) {
             deferred.reject(error)
           }
         } else {
           if (deferred) {
-            log(`Rpc response`)('%O', message.result)
+            log(`Rpc response`)(message.result)
             /*if (debug) {
               console.log(dTime(), 'Rpc response', message.result)
             } else {
