@@ -54,7 +54,7 @@ class TCP {
         const buffer = this.encapsulate(message)
 
         return new Promise((resolve, reject) => {
-            log(['post', `sent.${this.seqNo}`])(buffer)
+            log(['post', `sent.${this.seqNo}`])(`${buffer.byteLength} bytes`)
 
             if (this.socket.write(buffer)) {
                 log(['post'])(`passed to kernel. seqNo => ${this.seqNo}`)
@@ -68,7 +68,7 @@ class TCP {
 
             this.socket.once('data', (data) => {
                 const { length, seqNo, message } = this.decapsulate(data)
-                log(['post', `rcvd.${seqNo}`])(message)
+                log(['post', `rcvd.${seqNo}`])(`data ${data.length} bytes, message ${message.length} bytes (${length} dwords)`)
 
                 resolve(message)
                 if (message.toString().endsWith('exit')) {
