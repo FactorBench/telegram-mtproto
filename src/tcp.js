@@ -69,11 +69,11 @@ class TCP {
             this.socket.once('data', (data) => {
                 const { length, seqNo, message } = this.decapsulate(data)
                 log(['post', `rcvd.${seqNo}`])(`data ${data.length} bytes, message ${message.length} bytes (${length} dwords)`)
-
+                
                 resolve(message)
-                if (message.toString().endsWith('exit')) {
-                    this.socket.destroy()
-                }
+                //if (message.toString().endsWith('exit')) {
+                //    this.socket.destroy()
+                //}
             })
 
             this.socket.once('error', (err) => {
@@ -83,33 +83,35 @@ class TCP {
     }
 
     encapsulate(message) {
-        if (typeof message === 'string') { // for test
-            message = Uint8Array.from(message.split('').map(c => c.charCodeAt(0)))
-        }
+        const tailless = new Int32Array(message.length + 2)
 
-        const msgLength = (message.length + 12) / 4 | 0,
-            arr = new Uint32Array(3),
-            head = Buffer.from(arr.buffer, 0, 8),
-            body = Buffer.from(message.buffer),
-            tail = Buffer.from(arr.buffer, 8, 4),
-            crc = crc32(message)
+        tailless[0] = message.length + 3
+        tailless[1] = this.seqNo
+        tailless.set(message, 2)
 
-        arr[0] = msgLength
-        arr[1] = this.seqNo
-        arr[2] = crc
+        const crc = crc32(tailless),
+            data = new Int32Array(message.length + 3)
 
-        log(['encapsulate'])(`crc = ${crc}`)
+        data.set(tailless)
+        data[tailless.length] = crc
 
-        return Buffer.concat([head, body, tail])
+        log('encapsulate')(data)
+        log('encapsulate')(`crc = ${crc}`)
+
+        return Buffer.from(data.buffer)
     }
 
     decapsulate(buffer) {
-        const length = buffer.readUIntLE(0, 4) - 3, // in 4-bytes
-            seqNo = buffer.readUIntLE(4, 4),
-            message = buffer.slice(8, -4),//(8, length * 4),
-            crc = buffer.readUIntLE(8 + length * 4, 4)
+        log('decapsulate')(`${buffer.byteLength} bytes`)
+        const length = buffer.readInt32LE(0) - 3, // in 4-bytes
+            seqNo = buffer.readInt32LE(4),
+            message = buffer.slice(8, -4),
+            tailless = Buffer.alloc(buffer.byteLength - 4),
+            crc = buffer.readUInt32LE(8 + length * 4),
+            copied = buffer.copy(tailless, 0, 0)
 
-        if (crc !== crc32(Uint8Array.from(message))) throw new Error('BAD_RESPONSE_CRC')
+        log('decapsulate')({length, seqNo, crc, copied})
+        if (crc !== crc32(new Int32Array(tailless.buffer))) throw new Error('BAD_RESPONSE_CRC')
 
         return { length, seqNo, message }
     }
