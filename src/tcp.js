@@ -25,7 +25,7 @@ class TCP {
     }
 
     connect({ host, port, url }) {
-        if (url.indexOf(':') > 6) {
+        if (url && url.indexOf(':') > 6) {
             [, host, port] = reURL.exec(url)
         }
         this.host = host || HOST
