@@ -5,12 +5,12 @@ import net from 'net'
 
 import Logger from './util/log'
 import crc32 from './crc32'
-import { builtinModules } from 'module';
 
 const log = Logger`tcp`
 
 const PORT = 443
 const HOST = '149.154.175.10'
+const reURL = new RegExp(/([0-9.]+):(80|443)/)
 
 class TCP {
     constructor(socket) {
@@ -24,9 +24,13 @@ class TCP {
         // this.socket._handle === null
     }
 
-    connect({ host, port }) {
+    connect({ host, port, url }) {
+        if (url.indexOf(':') > 6) {
+            [, host, port] = reURL.exec(url)
+        }
         this.host = host || HOST
         this.port = port || PORT
+        console.log({host: this.host, port: this.port})
 
         return new Promise((resolve, reject) => {
             const connectHandler = () => {
