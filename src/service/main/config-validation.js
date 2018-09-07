@@ -36,14 +36,17 @@ const api = {
   type      : 'object',
   required  : ['layer', 'api_id'],
   properties: {
-    invokeWithLayer: type.num,
-    layer          : type.num,
-    initConnection : type.num,
-    api_id         : type.num,
-    device_model   : type.str,
-    system_version : type.str,
-    app_version    : type.str,
-    lang_code      : type.str
+    invokeWithLayer : type.num,
+    layer           : type.num,
+    flags           : type.num,
+    initConnection  : type.num,
+    api_id          : type.num,
+    device_model    : type.str,
+    system_version  : type.str,
+    app_version     : type.str,
+    system_lang_code: type.str,
+    lang_pack       : type.str,
+    lang_code       : type.str,
   },
   additionalProperties: false
 }

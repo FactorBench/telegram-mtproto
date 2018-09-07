@@ -18,14 +18,17 @@ const api57 = require('../../../schema/api-57.json')
 const mtproto57 = require('../../../schema/mtproto-57.json')
 
 const apiConfig: ApiConfig = {
-  invokeWithLayer: 0xda9b0d0d,
-  layer          : 57,
-  initConnection : 0x69796de9,
-  api_id         : 49631,
-  device_model   : 'Unknown UserAgent',
-  system_version : 'Unknown Platform',
-  app_version    : '1.0.1',
-  lang_code      : 'en'
+  invokeWithLayer : 0xda9b0d0d,
+  layer           : 82,
+  initConnection  : 0x785188b8,
+  flags           : 0,
+  api_id          : 49631,
+  device_model    : 'Unknown UserAgent',
+  system_version  : 'Unknown Platform',
+  app_version     : '1.0.1',
+  system_lang_code: 'en',
+  lang_pack       : 'ios',
+  lang_code       : 'en',
 }
 
 class MTProto {
