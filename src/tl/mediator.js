@@ -96,7 +96,7 @@ export const WriteMediator = {
 export const ReadMediator = {
   int(ctx: TypeBuffer, field: string) {
     const result = ctx.nextInt()
-    log('read, int')(field, result)
+    //log('read, int')(field, result)
     return result
   },
   long(ctx: TypeBuffer, field: string ){
@@ -129,7 +129,7 @@ export const ReadMediator = {
       s = sUTF8
     }
 
-    log(`read, string`)(s, `${field}:string`)
+    //log(`read, string`)(s, `${field}:string`)
 
     return s
   },
@@ -145,7 +145,7 @@ export const ReadMediator = {
     const bytes = ctx.next(len)
     ctx.addPadding()
 
-    log(`read, bytes`)(bytesToHex(bytes), `${ field }:bytes`)
+    //log(`read, bytes`)(bytesToHex(bytes), `${ field }:bytes`)
 
     return bytes
   }

@@ -160,23 +160,21 @@ export class ApiManager {
 
     return networkSetter(authKey, serverSalt)
   }
-  async initConnection(dcID) {
+  async initConnection() {
     if (!isAnyNetworker(this)) {
-      await this.storage.set('dc', dcID)
-      await this.mtpGetNetworker(dcID, { createNetworker: true })
-      // const storedBaseDc = await this.storage.get('dc')
-      // const baseDc = storedBaseDc || baseDcID
-      // const opts = {
-      //    dcID           : baseDc,
-      //    createNetworker: true
-      // }
-      // const networker = await this.mtpGetNetworker(baseDc, opts)
-      // const nearestDc = await networker.wrapApiCall(
-      //    'help.getNearestDc', {}, opts)
-      // const { nearest_dc, this_dc } = nearestDc
-      // await this.storage.set('dc', nearest_dc)
-      // debug(`nearest Dc`)('%O', nearestDc)
-      // if (nearest_dc !== this_dc) await this.mtpGetNetworker(nearest_dc, { createNetworker: true })
+      const storedBaseDc = await this.storage.get('dc')
+      const baseDc = storedBaseDc || baseDcID
+      const opts = {
+        dcID           : baseDc,
+        createNetworker: true
+      }
+      const networker = await this.mtpGetNetworker(baseDc, opts)
+      const nearestDc = await networker.wrapApiCall(
+        'help.getNearestDc', {}, opts)
+      const { nearest_dc, this_dc } = nearestDc
+      await this.storage.set('dc', nearest_dc)
+      debug(`nearest Dc`)('%O', nearestDc)
+      if (nearest_dc !== this_dc) await this.mtpGetNetworker(nearest_dc, { createNetworker: true })
     }
   }
   mtpInvokeApi = async (method: string, params: Object, options: LeftOptions = {}) => {
@@ -204,11 +202,13 @@ export class ApiManager {
       }
     }
 
-    const dcID = options.dcID || await this.storage.get('dc') || baseDcID
-
-    await this.initConnection(dcID)
+    await this.initConnection()
 
     const requestThunk = waitTime => delayedCall(req.performRequest, +waitTime * 1e3)
+
+    const dcID = options.dcID
+      ? options.dcID
+      : await this.storage.get('dc')
 
     const networker = await this.mtpGetNetworker(dcID, options)
 
