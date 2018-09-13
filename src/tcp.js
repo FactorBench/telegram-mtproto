@@ -19,14 +19,21 @@ class TCP {
         this.host = host
         this.port = 80//port
         this.socket = socket || new net.Socket()
+        //this.socket._destroy = this._destroy.bind(this)
         this.seqNo = 0
         this.intermediateModeInited = false
+        this.isClosed = false
 
         if (mode) mode = mode.toLowerCase()
         this.mode = modes.includes(mode) ? mode : 'intermediate'
 
-        this.socket.on('close', () => {
+        this.socket.on('close', async (hadError) => {
+            // TODO limit reconnection tries
             log('close')('connection closed')
+            if (hadError) {
+                log('close')('try to reconnect...')
+                await this.connect()
+            }
         })
     }
 
@@ -126,8 +133,19 @@ class TCP {
         })
     }
 
-    destroy(exception) {
-        this.socket.destroy(exception)
+    _destroy(exception) {
+        log('_destroy')('socket destroyed')
+        this.isClosed = exception ? false : true
+        if (exception) log('_destroy')(exception)
+    }
+
+    _parseUrl(url) {
+        let host, port
+
+        if (url && url.indexOf(':', 6) > 6) {
+            [, host, port] = reURL.exec(url)
+        }
+        return [host, port]
     }
 }
 
