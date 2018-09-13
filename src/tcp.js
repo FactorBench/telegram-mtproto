@@ -6,7 +6,8 @@ import net from 'net'
 import Logger from './util/log'
 import crc32 from './crc32'
 
-const log = Logger`tcp`
+//const log = Logger`tcp`
+const log = (msg1) => (msg2) => console.log(`[${msg1}]`, msg2)
 
 const reURL = new RegExp(/([0-9.]+):(80|443)/)
 
@@ -22,12 +23,14 @@ class TCP {
         //this.socket._destroy = this._destroy.bind(this)
         this.seqNo = 0
         this.intermediateModeInited = false
+        this.isConnected = false
         this.isClosed = false
 
         if (mode) mode = mode.toLowerCase()
         this.mode = modes.includes(mode) ? mode : 'intermediate'
 
         this.socket.on('close', async (hadError) => {
+            this.isConnected = false
             // TODO limit reconnection tries
             log('close')('connection closed')
             if (hadError) {
@@ -40,6 +43,7 @@ class TCP {
     connect() {
         return new Promise((resolve, reject) => {
             const connectHandler = () => {
+                this.isConnected = true
                 log('connect')(`connected to ${this.host}:${this.port}`)
                 this.socket.removeListener('error', errorHandler)
 
@@ -49,14 +53,14 @@ class TCP {
                     log(['connect', 'sent'])(`init packet sending ${isInited ? 'successful' : 'failure'}`)
                 } else {
                     this.socket.removeListener('data', initHandler)
-            }
+                }
                 resolve(this.socket)
             }
             const errorHandler = (err) => {
                 log('connect')('failed:', err)
                 this.socket.removeListener('connect', connectHandler)
                 this.socket.removeListener('data', initHandler)
-                
+
                 reject(err)
             }
             const initHandler = (data) => {
@@ -65,15 +69,15 @@ class TCP {
                 //resolve()
             }
 
-            if (this.socket._handle !== null) {
+            if (this.isConnected) {
                 this.socket.removeListener('connect', connectHandler)
                 this.socket.removeListener('data', initHandler)
                 this.socket.removeListener('error', errorHandler)
                 resolve(this.socket)
             } else {
-            this.socket.on('error', errorHandler)
-            this.socket.once('data', initHandler)
-            this.socket.connect(this.port, this.host, connectHandler)
+                this.socket.on('error', errorHandler)
+                this.socket.once('data', initHandler)
+                this.socket.connect(this.port, this.host, connectHandler)
             }
         })
     }
@@ -82,7 +86,7 @@ class TCP {
         const buffer = this.encapsulate(message)
 
         return new Promise(async (resolve, reject) => {
-            if (this.socket._handle === null) await this.connect()
+            if (!this.isConnected) await this.connect()
 
             log(['post', `sent.${this.seqNo}`])(`${buffer.byteLength} bytes`)
 
@@ -99,7 +103,7 @@ class TCP {
             this.socket.once('data', (data) => {
                 const { length, seqNo, message } = this.decapsulate(data)
                 log(['post', `rcvd.${seqNo}`])(`data ${data.length} bytes, message ${message.length} bytes`)
-                
+
                 if (message.toString().endsWith('exit')) {
                     this.socket.destroy()
                 }
