@@ -57,8 +57,9 @@ const configNormalization = (config: ConfigType): StrictConfig => {
     } = {},
     schema = api57,
     mtSchema = mtproto57,
+    platform
   } = config
-  const apiNormalized = { ...apiConfig, ...api }
+  const apiNormalized = { ...apiConfig, ...api, platform }
   const invokeLayer = generateInvokeLayer(apiNormalized.layer)
   apiNormalized.invokeWithLayer = invokeLayer
   const fullCfg = {
