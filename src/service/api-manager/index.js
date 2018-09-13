@@ -92,7 +92,7 @@ export class ApiManager {
     this.emit = emit
     this.TL = tls
     this.keyManager = KeyManager(this.TL.Serialization, publicKeys, this.cache.keysParsed)
-    this.auth = Auth(this.TL, this.keyManager)
+    this.auth = Auth(this.TL, this.keyManager, this.apiConfig.platform)
     this.networkFabric = netFabric(this.chooseServer)
     this.mtpInvokeApi = this.mtpInvokeApi.bind(this)
     this.mtpGetNetworker = this.mtpGetNetworker.bind(this)
@@ -115,9 +115,7 @@ export class ApiManager {
     }
   mtpGetNetworker = async (dcID: number, options: LeftOptions = {}) => {
     // const isUpload = options.fileUpload || options.fileDownload
-    // const cache = isUpload
-    //   ? this.cache.uploader
-    //   : this.cache.downloader
+    // const cache = isUpload ? this.cache.uploader : this.cache.downloader
 
     const cache = this.cache.downloader
     if (!dcID) throw new Error('get Networker without dcID')

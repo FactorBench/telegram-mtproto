@@ -7,6 +7,7 @@ import pathEq from 'ramda/src/pathEq'
 import allPass from 'ramda/src/allPass'
 
 import httpClient from '../../http'
+import TCP from '../../tcp'
 import { ErrorBadResponse, ErrorNotFound } from '../../error'
 import { generateID } from '../time-manager'
 import { WriteMediator, ReadMediator } from '../../tl'
@@ -16,8 +17,8 @@ import type { TLFabric } from '../../tl'
 const is404 = pathEq(['response', 'status'], 404)
 const notError = allPass([has('message'), has('type')])
 
-const SendPlain = ({ Serialization, Deserialization }: TLFabric) => {
-  const onlySendPlainReq = (url: string, requestBuffer: ArrayBuffer) => {
+const SendPlain = ({ Serialization, Deserialization }: TLFabric, platform) => {
+  const onlySendPlainReq = async (url: string, requestBuffer: ArrayBuffer) => {
     const requestLength = requestBuffer.byteLength,
           requestArray = new Int32Array(requestBuffer)
 
@@ -39,11 +40,15 @@ const SendPlain = ({ Serialization, Deserialization }: TLFabric) => {
     resultArray.set(requestArray, headerArray.length)
 
     const requestData = resultArray
-    // let reqPromise
+    let reqPromise
     // try {
-    const reqPromise = httpClient.post(url, requestData, {
-      responseType: 'arraybuffer'
-    })
+    if (platform == 'web') {
+      reqPromise = httpClient.post(url, requestData, { responseType: 'arraybuffer' })
+    } else {
+      const tcpClient = new TCP({url})
+      console.log("\n>>> SENDPLAINREQ: ", url, "<<<\n")
+      reqPromise = tcpClient.post(requestData)
+    }
     // } catch (e) {
     //   reqPromise = Promise.reject(new ErrorBadResponse(url, e))
     // }
