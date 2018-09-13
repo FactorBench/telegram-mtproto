@@ -13,28 +13,24 @@ const reURL = new RegExp(/([0-9.]+):(80|443)/)
 const modes = ['full', 'abridged', 'intermediate']
 
 class TCP {
-    constructor(socket, mode = 'intermediate') {
+    constructor({ host, port, url, socket, mode }) {
+        if (url) [host, port] = this._parseUrl(url)
+
+        this.host = host
+        this.port = 80//port
         this.socket = socket || new net.Socket()
         this.seqNo = 0
         this.intermediateModeInited = false
 
-        mode = mode.toLowerCase()
-        if (modes.includes(mode)) this.mode = mode
+        if (mode) mode = mode.toLowerCase()
+        this.mode = modes.includes(mode) ? mode : 'intermediate'
 
         this.socket.on('close', () => {
             log('close')('connection closed')
         })
     }
 
-    connect({ host, port, url }) {
-        if (url && url.indexOf(':') > 6) {
-            [, host, port] = reURL.exec(url)
-        }
-
-        this.host = host || HOST
-        this.port = port || PORT
-        console.log({host: this.host, port: this.port})
-
+    connect() {
         return new Promise((resolve, reject) => {
             const connectHandler = () => {
                 log('connect')(`connected to ${this.host}:${this.port}`)
