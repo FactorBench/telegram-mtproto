@@ -43,7 +43,7 @@ class MTProto {
   constructor(config: ConfigType) {
     this.config = configNormalization(config)
     this.tls = TL(this.config.schema, this.config.mtSchema)
-    const netFabric = NetworkerFabric(this.config.api, this.tls, this.config.app.storage, this.emit)
+    const netFabric = NetworkerFabric(this.config.api, this.tls, this.config.app.storage, this.emit, this.config.platform)
     this.api = new ApiManager(this.config, this.tls, netFabric, { on: this.on, emit: this.emit })
   }
 }
@@ -62,7 +62,7 @@ const configNormalization = (config: ConfigType): StrictConfig => {
     mtSchema = mtproto57,
     platform
   } = config
-  const apiNormalized = { ...apiConfig, ...api, platform }
+  const apiNormalized = { ...apiConfig, ...api }
   const invokeLayer = generateInvokeLayer(apiNormalized.layer)
   apiNormalized.invokeWithLayer = invokeLayer
   const fullCfg = {
@@ -70,7 +70,8 @@ const configNormalization = (config: ConfigType): StrictConfig => {
     api: apiNormalized,
     app: { storage, publicKeys },
     schema,
-    mtSchema
+    mtSchema,
+    platform
   }
   configValidator(fullCfg)
   return fullCfg

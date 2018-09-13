@@ -46,8 +46,7 @@ const api = {
     app_version     : type.str,
     system_lang_code: type.str,
     lang_pack       : type.str,
-    lang_code       : type.str,
-    platform        : type.str
+    lang_code       : type.str
   },
   additionalProperties: false
 }
@@ -83,7 +82,8 @@ const schema = {
     api,
     server,
     schema  : type.obj,
-    mtSchema: type.obj
+    mtSchema: type.obj,
+    platform: type.str
   },
   additionalProperties: false
 }

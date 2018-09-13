@@ -79,7 +79,8 @@ export class ApiManager {
         publicKeys
       },
       schema,
-      mtSchema
+      mtSchema,
+      platform
     } = config
     this.apiConfig = api
     this.publicKeys = publicKeys
@@ -87,12 +88,13 @@ export class ApiManager {
     this.serverConfig = server
     this.schema = schema
     this.mtSchema = mtSchema
+    this.platform = platform
     this.chooseServer = chooseServer(this.cache.servers, server)
     this.on = on
     this.emit = emit
     this.TL = tls
     this.keyManager = KeyManager(this.TL.Serialization, publicKeys, this.cache.keysParsed)
-    this.auth = Auth(this.TL, this.keyManager, this.apiConfig.platform)
+    this.auth = Auth(this.TL, this.keyManager, this.platform)
     this.networkFabric = netFabric(this.chooseServer)
     this.mtpInvokeApi = this.mtpInvokeApi.bind(this)
     this.mtpGetNetworker = this.mtpGetNetworker.bind(this)

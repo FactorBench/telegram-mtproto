@@ -88,7 +88,8 @@ export class NetworkerThread {
       Serialization,
       Deserialization,
       storage,
-      emit
+      emit,
+      platform
     }: ContextConfig,
     dc: number,
     authKey: string,
@@ -102,6 +103,7 @@ export class NetworkerThread {
     this.emit = emit
     this.dcID = dc
     this.iii = iii++
+    this.platform = platform
 
     this.authKey = authKey
     this.authKeyUint8 = convertToUint8Array(authKey)
@@ -627,7 +629,7 @@ export class NetworkerThread {
 
     try {
       let result = {}
-      if (this.appConfig.platform == 'web') {
+      if (this.platform == 'web') {
         result = await httpClient.post(url, requestData, options)
       } else {
         const tcpClient = new TCP({url})
@@ -970,7 +972,8 @@ export const NetworkerFabric = (
   appConfig,
   { Serialization, Deserialization }: TLFabric,
   storage,
-  emit: Emit) => chooseServer =>
+  emit: Emit,
+  platform) => chooseServer =>
     (dc: number,
     authKey: string,
     serverSalt: string,
@@ -981,7 +984,8 @@ export const NetworkerFabric = (
         Serialization,
         Deserialization,
         storage,
-        emit
+        emit,
+        platform
       }, dc, authKey, serverSalt, options)
 
 
