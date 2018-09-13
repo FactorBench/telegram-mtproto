@@ -65,16 +65,25 @@ class TCP {
                 //resolve()
             }
 
+            if (this.socket._handle !== null) {
+                this.socket.removeListener('connect', connectHandler)
+                this.socket.removeListener('data', initHandler)
+                this.socket.removeListener('error', errorHandler)
+                resolve(this.socket)
+            } else {
             this.socket.on('error', errorHandler)
             this.socket.once('data', initHandler)
             this.socket.connect(this.port, this.host, connectHandler)
+            }
         })
     }
 
     post(message) {
         const buffer = this.encapsulate(message)
 
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
+            if (this.socket._handle === null) await this.connect()
+
             log(['post', `sent.${this.seqNo}`])(`${buffer.byteLength} bytes`)
 
             if (this.socket.write(buffer)) {
