@@ -8,8 +8,6 @@ import crc32 from './crc32'
 
 const log = Logger`tcp`
 
-const PORT = 443
-const HOST = '149.154.175.10'
 const reURL = new RegExp(/([0-9.]+):(80|443)/)
 
 const modes = ['full', 'abridged', 'intermediate']
@@ -26,7 +24,6 @@ class TCP {
         this.socket.on('close', () => {
             log('close')('connection closed')
         })
-        // this.socket._handle === null
     }
 
     connect({ host, port, url }) {
@@ -40,7 +37,6 @@ class TCP {
 
         return new Promise((resolve, reject) => {
             const connectHandler = () => {
-                // this.socket._handle !== null
                 log('connect')(`connected to ${this.host}:${this.port}`)
                 this.socket.removeListener('error', errorHandler)
 
@@ -105,24 +101,6 @@ class TCP {
     }
 
     encapsulate(message) {
-        /* // tcp_full
-        const tailless = new Int32Array(message.length + 2)
-
-        tailless[0] = message.byteLength + 12
-        tailless[1] = this.seqNo
-        tailless.set(message, 2)
-
-        const crc = crc32(tailless),
-            data = new Int32Array(message.length + 3)
-
-        data.set(tailless)
-        data[tailless.length] = crc
-
-        log('encapsulate')(data)
-        log('encapsulate')(`crc = ${crc}`)
-
-        return Buffer.from(data.buffer)
-        */
         const data = new Int32Array(message.length + 1)
 
         data[0] = message.byteLength
@@ -133,17 +111,6 @@ class TCP {
 
     decapsulate(buffer) {
         log('decapsulate')(`${buffer.byteLength} bytes`)
-        /* // tcp_full
-        const length = buffer.readInt32LE(0) - 12, // in 4-bytes
-            seqNo = buffer.readInt32LE(4),
-            message = buffer.slice(8, -4),
-            tailless = Buffer.alloc(buffer.byteLength - 4),
-            crc = buffer.readUInt32LE(8 + length),
-            copied = buffer.copy(tailless, 0, 0)
-
-        log('decapsulate')({length, seqNo, crc, copied})
-        if (crc !== crc32(new Int32Array(tailless.buffer))) throw new Error('BAD_RESPONSE_CRC')
-        */
         const length = buffer.readInt32LE(0),
             message = buffer.slice(4),
             seqNo = 0
