@@ -79,7 +79,8 @@ const schema = {
     api,
     server,
     schema  : type.obj,
-    mtSchema: type.obj
+    mtSchema: type.obj,
+    platform: type.str
   },
   additionalProperties: false
 }
