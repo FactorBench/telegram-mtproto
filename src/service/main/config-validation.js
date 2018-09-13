@@ -43,7 +43,8 @@ const api = {
     device_model   : type.str,
     system_version : type.str,
     app_version    : type.str,
-    lang_code      : type.str
+    lang_code      : type.str,
+    platform       : type.str
   },
   additionalProperties: false
 }
@@ -79,8 +80,7 @@ const schema = {
     api,
     server,
     schema  : type.obj,
-    mtSchema: type.obj,
-    platform: type.str
+    mtSchema: type.obj
   },
   additionalProperties: false
 }
