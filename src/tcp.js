@@ -117,10 +117,11 @@ class TCP {
     }
 
     encapsulate(message) {
-        const data = new Int32Array(message.length + 1)
+        const int32Message = new Int32Array(message)
+        const data = new Int32Array(int32Message.length + 1)
 
-        data[0] = message.byteLength
-        data.set(message, 1)
+        data[0] = int32Message.byteLength
+        data.set(int32Message, 1)
         log('encapsulate')(data.toString())
         return Buffer.from(data.buffer)
     }
