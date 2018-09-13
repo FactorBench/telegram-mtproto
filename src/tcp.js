@@ -53,7 +53,7 @@ class TCP {
                 resolve(this.socket)
             }
             const errorHandler = (err) => {
-                log('connect')('failed: %O', err)
+                log('connect')('failed:', err)
                 this.socket.removeListener('connect', connectHandler)
                 this.socket.removeListener('data', initHandler)
                 
@@ -98,12 +98,12 @@ class TCP {
 
             this.socket.once('data', (data) => {
                 const { length, seqNo, message } = this.decapsulate(data)
-                log(['post', `rcvd.${seqNo}`])(`data ${data.length} bytes, message ${message.length} bytes (${length} dwords)`)
+                log(['post', `rcvd.${seqNo}`])(`data ${data.length} bytes, message ${message.length} bytes`)
                 
                 if (message.toString().endsWith('exit')) {
                     this.socket.destroy()
                 }
-                resolve({data: message})
+                resolve({ data: message })
             })
 
             this.socket.once('error', (err) => {
@@ -117,7 +117,7 @@ class TCP {
 
         data[0] = message.byteLength
         data.set(message, 1)
-        log('encapsulate')(data)
+        log('encapsulate')(data.toString())
         return Buffer.from(data.buffer)
     }
 
@@ -128,7 +128,7 @@ class TCP {
             seqNo = 0
 
         if (length !== message.length) {
-            log(['decapsulate', 'error'])({length, bufferLength: buffer.length})
+            log(['decapsulate', 'error'])({ length, bufferLength: buffer.length })
             log(['decapsulate', 'error'])(buffer)
             throw new Error('BAD_RESPONSE_LENGTH')
         }
