@@ -14,6 +14,7 @@ import { NetMessage, NetContainer } from './net-message'
 import State from './state'
 import smartTimeout, { immediate } from '../../util/smart-timeout'
 import { httpClient } from '../../http'
+import TCP from '../../tcp'
 
 import { ErrorBadRequest, ErrorBadResponse } from '../../error'
 
@@ -622,7 +623,13 @@ export class NetworkerThread {
     options = { responseType: 'arraybuffer', ...options }
 
     try {
-      const result = await httpClient.post(url, requestData, options)
+      let result = {}
+      if (this.appConfig.platform == 'web') {
+        result = await httpClient.post(url, requestData, options)
+      } else {
+        const tcpClient = new TCP({url})
+        result = await tcpClient.post(requestData)
+      }
       return !result.data || !result.data.byteLength
         ? Promise.reject(new ErrorBadResponse(url, result))
         : result
