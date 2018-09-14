@@ -249,8 +249,8 @@ export class NetworkerThread {
   checkLongPoll = async () => {
     const isClean = this.cleanupSent()
     // console.log('Check lp', this.longPollPending, tsNow(), this.dcID, isClean)
-    if (this.checkLongPollCond())
-      return false
+    // if (this.checkLongPollCond()) // Comment as long poll doesn't work properly on mobile
+    return false
 
     const baseDc: number = await this.storage.get('dc')
     if (this.checkLongPollAfterDcCond(isClean, baseDc))
@@ -618,7 +618,7 @@ export class NetworkerThread {
     WriteMediator.intBytes(requestBox, msgKey, 128, 'msg_key')
     WriteMediator.intBytes(requestBox, encryptedBytes, false, 'encrypted_data')
 
-    const requestData = xhrSendBuffer
+    /* const requestData = xhrSendBuffer
       ? requestBox.getArray().buffer
       : requestBox.getArray()
 
@@ -631,6 +631,24 @@ export class NetworkerThread {
         : result
     } catch (error) {
       return Promise.reject(new ErrorBadRequest(url, error))
+    } */
+
+    try {
+      const request = {
+            mode   : 'cors',
+            headers: {
+                'Content-Type': 'application/octet',
+            },
+            method: 'POST',
+            body  : Buffer.from(requestBox.getBytesPlain()),
+      }
+      const result = await fetch(url, request)
+      const data = new Uint8Array(await result.arrayBuffer()).buffer
+      return result.status === 404 || !data || !data.byteLength
+        ? Promise.reject(new ErrorBadResponse(url, data))
+        : { data }
+    } catch (error) {
+      return Promise.reject(new ErrorBadResponse(url, error))
     }
   }
 
