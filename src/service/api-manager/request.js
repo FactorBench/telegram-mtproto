@@ -43,6 +43,7 @@ class Request {
     if (!this.config.networker) {
       const { getNetworker, netOpts, dc } = this.config
       console.log('[InitNetworker] this.config.dc =', this.config.dc)
+      if (netOpts.dcID) netOpts.dcID = this.config.dc // todo hack... rewrite
       return getNetworker(dc, netOpts)
         .then(this.saveNetworker)
     }
@@ -76,10 +77,7 @@ class Request {
     if (+newDcID === this.config.dc) return Promise.reject(err)
     this.config.dc = +newDcID
     delete this.config.networker
-    /*if (this.config.dc)
-      this.config.dc = newDcID
-    else
-      await this.config.storage.set('dc', newDcID)*/
+    this.config.storage.set('dc', this.config.dc)
     //TODO There is disabled ability to change default DC
     //NOTE Shouldn't we must reassign current networker/cachedNetworker?
     console.log('[Error303] this.config.dc =', this.config.dc)
@@ -88,7 +86,6 @@ class Request {
 
   error420(err: MTError) {
     console.log('[Error420]', err)
-    console.log('[Error420]', err instanceof Error)
     const matched = err.type.match(/^FLOOD_WAIT_(\d+)/)
     if (!matched || matched.length < 2) return Promise.reject(err)
     const [ , waitTime ] = matched

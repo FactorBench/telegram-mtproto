@@ -22,9 +22,9 @@ const protect = (
 
 const patterns = {
   noBaseAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID === base && type !== 'SESSION_PASSWORD_NEEDED',
-  noDcAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID !== base,// && type === 'AUTH_KEY_UNREGISTERED',
+  noDcAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID !== base && type !== 'SESSION_PASSWORD_NEEDED',// && type === 'AUTH_KEY_UNREGISTERED',
   waitFail: ({ code, type, errR })  =>  !errR && (code === 500 || type === 'MSG_WAIT_FAILED'),
-  fileMigrate: ({ code, type }) => code === 303 && type.slice(0, -1) === 'FILE_MIGRATE_',
+  //fileMigrate: ({ code, type }) => code === 303 && type.slice(0, -1) === 'FILE_MIGRATE_',
   _ : () => true
 }
 
