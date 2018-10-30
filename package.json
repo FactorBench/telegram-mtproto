@@ -33,10 +33,11 @@
     "debug": "^2.6.3",
     "detect-node": "^2.0.3",
     "eventemitter2": "^3.0.2",
+    "leemon": "^6.2.0",
     "memoizee": "^0.4.4",
-    "pako": "^1.0.4",
-    "ramda": "^0.23.0",
-    "randombytes": "^2.0.3",
+    "pako": "^1.0.6",
+    "ramda": "^0.25.0",
+    "randombytes": "^2.0.6",
     "rusha": "^0.8.5"
   },
   "devDependencies": {
@@ -66,7 +67,8 @@
     "prompt": "^1.0.0",
     "rimraf": "^2.6.1",
     "tap": "^10.3.0",
-    "webpack": "^2.2.1"
+    "webpack": "^2.2.1",
+    "worker-loader": "^1.1.0"
   },
   "engines": {
     "node": ">=6.0"

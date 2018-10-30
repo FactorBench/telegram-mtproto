@@ -9,7 +9,7 @@ import random from './service/secure-random'
 
 import { eGCD_, greater, divide_, str2bigInt, equalsInt,
   isZero, bigInt2str, copy_, copyInt_, rightShift_,
-  leftShift_, sub_, add_, powMod, bpe, one } from './vendor/leemon'
+  leftShift_, sub_, add_, powMod, bpe, one } from 'leemon'
 
 
 const rushaInstance = new Rusha(1024 * 1024)
@@ -408,4 +408,3 @@ export function bytesModPow(x, y, m) {
 
   return bytesFromHex(bigInt2str(resBigInt, 16))
 }
-
