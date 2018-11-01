@@ -110,6 +110,11 @@ export function bytesFromLeemonBigInt(bigInt) {
   return bytesFromHex(str)
 }
 
+export function bytesFromNativeBigInt(bigInt) {
+  const str = bigInt.toString(16)
+  return bytesFromHex(str)
+}
+
 export function bytesToArrayBuffer(b) {
   return (new Uint8Array(b)).buffer
 }
@@ -318,12 +323,19 @@ export function nextRandomInt(maxValue) {
 
 
 export function pqPrimeFactorization(pqBytes) {
-  const minSize = Math.ceil(64 / bpe) + 1
-
-  // const what = new BigInteger(pqBytes)
+  let result = false
   const hex = bytesToHex(pqBytes)
-  const lWhat = str2bigInt(hex, 16, minSize)
-  const result = pqPrimeLeemon(lWhat)
+  const date = new Date()
+  if (window.BigInt) {
+    const what = BigInt(`0x${hex}`)
+    result = pqPrimeNative(what)
+    console.log('[MTProto] Time to factorize pq with Native BigInt:', new Date().getTime() - date.getTime())
+  } else {
+    const minSize = Math.ceil(64 / bpe) + 1
+    const lWhat = str2bigInt(hex, 16, minSize)
+    result = pqPrimeLeemon(lWhat)
+    console.log('[MTProto] Time to factorize pq with Leemon BigInt:', new Date().getTime() - date.getTime())
+  }
   return result
 }
 
@@ -407,4 +419,76 @@ export function bytesModPow(x, y, m) {
   const resBigInt = powMod(xBigInt, yBigInt, mBigInt)
 
   return bytesFromHex(bigInt2str(resBigInt, 16))
+}
+
+// Native BigInt
+export function gcdNative(n, m) {
+  let r = BigInt(0)
+  while (n !== BigInt(0)) {
+    r = m % n
+    m = n
+    n = r
+  }
+  return m
+}
+
+export function pqPrimeNative(what) {
+  let it = 0,
+      g
+  for (let i = 0; i < 3; i++) {
+    let q = BigInt((nextRandomInt(128) & 15) + 17),
+        x = BigInt(nextRandomInt(1000000000) + 1),
+        y = x,
+        lim = 1 << i + 18
+
+    for (let j = 1; j < lim; j++) {
+      ++it
+      let a = x,
+          b = x,
+          c = q
+
+      while (b !== BigInt(0)) {
+        if ((b & BigInt(1)) !== BigInt(0)) {
+          c += a
+          if (c > what) {
+            c -= what
+          }
+        }
+        a += a
+        if (a > what) {
+          a -= what
+        }
+        b >>= BigInt(1)
+      }
+
+      x = c
+      const z = x < y ? y - x : x - y
+      g = gcdNative(z, what)
+      if (g !== BigInt(1)) {
+        break
+      }
+      if ((j & j - 1) == 0) {
+        y = x
+      }
+    }
+    if (g > BigInt(1)) {
+      break
+    }
+  }
+
+  let f = what / g,
+      P,
+      Q
+
+  if (g > f) {
+    P = f
+    Q = g
+  } else {
+    P = g
+    Q = f
+  }
+
+    // console.log('native', 'P', P, 'Q', Q)
+
+  return [bytesFromNativeBigInt(P), bytesFromNativeBigInt(Q)]
 }
