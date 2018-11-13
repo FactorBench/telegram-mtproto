@@ -306,11 +306,11 @@ export class Deserialization {
     if (type.charAt(0) === 'V') {
       const constructor = this.readInt(`${field}[id]`)
       const constructorCmp = uintToInt(constructor)
-
       if (constructorCmp === PACKED)
         return this.fetchPacked(type, field)
-      if (constructorCmp !== 0x1cb5c415)
+      if (constructorCmp !== 0x1cb5c415) {
         throw new Error(`Invalid vector constructor ${constructor}`)
+      }
     }
     const len = this.readInt(`${field}[count]`)
     const result = []
