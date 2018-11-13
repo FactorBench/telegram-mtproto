@@ -21,7 +21,7 @@ const protect = (
   })
 
 const patterns = {
-  noBaseAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID === base && type !== 'SESSION_PASSWORD_NEEDED',
+  noBaseAuth: ({ code, dcID, base, type })  =>  code == 401 && dcID == base && type != 'SESSION_PASSWORD_NEEDED',
   noDcAuth: ({ code, dcID, base, type })  =>  code === 401 && dcID !== base && type !== 'SESSION_PASSWORD_NEEDED',// && type === 'AUTH_KEY_UNREGISTERED',
   waitFail: ({ code, type, errR })  =>  !errR && (code === 500 || type === 'MSG_WAIT_FAILED'),
   //fileMigrate: ({ code, type }) => code === 303 && type.slice(0, -1) === 'FILE_MIGRATE_',
@@ -59,24 +59,58 @@ const matchProtect =
 
 
 const noBaseAuth = ({ emit, throwNext, storage }) => {
+  console.log('[noBaseAuth]')
   storage.remove('dc', 'user_auth')
   emit('error.401.base')
   throwNext()
 }
 
 const noDcAuth = ({ dcID, reject, apiSavedNet, apiRecall, deferResolve, invoke }) => {
+  console.log('[noDcAuth:0]', { dcID })
   const importAuth = ({ id, bytes }) => invoke(
     'auth.importAuthorization',
     { id, bytes },
     { dcID, noErrorBox: true })
 
+  console.log('[noDcAuth:1] check stored:', cachedExportPromise[dcID], isNil(cachedExportPromise[dcID]))
+  console.log('[noDcAuth:1.1]', cachedExportPromise)
   if (isNil(cachedExportPromise[dcID])) {
+    console.log('[noDcAuth:2] start to transfer authorization')
     const exportDeferred = blueDefer()
 
+                /* mtpInvokeApi('auth.exportAuthorization', {dc_id: dcID}, {noErrorBox: true}).then(function (exportedAuth) {
+                  mtpInvokeApi('auth.importAuthorization', {
+                    id: exportedAuth.id,
+                    bytes: exportedAuth.bytes
+                  }, {dcID: dcID, noErrorBox: true}).then(function () {
+                    exportDeferred.resolve()
+                  }, function (e) {
+                    exportDeferred.reject(e)
+                  })
+                }, function (e) {
+                  exportDeferred.reject(e)
+                })
+
+                cachedExportPromise[dcID] = exportDeferred.promise */
+
+
     invoke('auth.exportAuthorization', { dc_id: dcID }, { noErrorBox: true })
-      .then(importAuth)
-      .then(exportDeferred.resolve)
-      .catch(exportDeferred.reject)
+      .then(function({exportedAuth}) {
+        console.log('[noDcAuth:3] for import:', { exportedAuth })
+        importAuth({ id, bytes }).then(function() {
+          console.log('[noDcAuth:3.1] imported')
+          exportDeferred.resolve()
+        }, function(e) {
+          console.log('[noDcAuth:3.2] import failed:', e)
+          exportDeferred.reject(e)
+        })
+      }, function(e) {
+        console.log('[noDcAuth:4] export failed:', e)
+        exportDeferred.reject(e)
+      })
+      //.then(importAuth)
+      //.then(exportDeferred.resolve)
+      //.catch(exportDeferred.reject)
 
     cachedExportPromise[dcID] = exportDeferred.promise
   }
@@ -120,8 +154,9 @@ const waitFail = ({ options, throwNext, requestThunk }) => {
   if (options.stopTime) {
     if (now >= options.stopTime)
       return throwNext()
-  } else
+  } else {
     options.stopTime = now + propOr(10, 'timeout', options) * 1000
+  }
   options.waitTime = options.waitTime
     ? Math.min(60, options.waitTime * 1.5)
     : 1

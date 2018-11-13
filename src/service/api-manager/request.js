@@ -39,14 +39,16 @@ class Request {
   }
 
   initNetworker = (): Promise<NetworkerType> => {
-    console.log('[InitNetworker] this.config.dc =', this.config.dc)
-    if (!this.config.networker) {
+    console.log('[initNetworker:0]', this.config)
+    if (!this.config.networker || this.config.networker.dcID != this.config.dc) {
       const { getNetworker, netOpts, dc } = this.config
-      console.log('[InitNetworker] this.config.dc =', this.config.dc)
+      console.log('[initNetworker:1] this.config.dc =', this.config.dc)
       if (netOpts.dcID) netOpts.dcID = this.config.dc // todo hack... rewrite
+
       return getNetworker(dc, netOpts)
         .then(this.saveNetworker)
     }
+
     return Promise.resolve(this.config.networker)
   }
 
@@ -62,25 +64,41 @@ class Request {
     console.log('[RequestWith] this.config.netOpts = ', this.config.netOpts)
     this.config.netOpts.dcID = this.config.dc
     return networker
-    .wrapApiCall(this.method, this.params, this.config.netOpts)
-    .catch({ code: 303 }, this.error303)
-    .catch({ code: 420 }, this.error420)
+      .wrapApiCall(this.method, this.params, this.config.netOpts)
+      .catch({ code: 303 }, this.error303)
+      .catch({ code: 420 }, this.error420)
   }
 
+  /*
+if (error.code == 303) {
+              var newDcID = error.type.match(/^(PHONE_MIGRATE_|NETWORK_MIGRATE_|USER_MIGRATE_)(\d+)/)[2]
+              if (newDcID != dcID) {
+                if (options.dcID) {
+                  options.dcID = newDcID
+                } else {
+                  Storage.set({dc: baseDcID = newDcID})
+                }
+
+                mtpGetNetworker(newDcID, options).then(function (networker) {
+                  networker.wrapApiCall(method, params, options).then(function (result) {
+                    deferred.resolve(result)
+                  }, rejectPromise)
+                }, rejectPromise)
+              }
+            }
+  */
   error303(err: MTError) {
     console.log('[Error303]', err)
-    console.log('[Error303]', err instanceof Error)
-    console.log('[Error303] this.config.dc =', this.config.dc)
+    console.log('[Error303] on enter this.config.dc =', this.config.dc)
     const matched = err.type.match(/^(PHONE_MIGRATE_|NETWORK_MIGRATE_|USER_MIGRATE_)(\d+)/)
     if (!matched || matched.length < 2) return Promise.reject(err)
-    const [ , , newDcID] = matched
-    if (+newDcID === this.config.dc) return Promise.reject(err)
-    this.config.dc = +newDcID
-    delete this.config.networker
-    this.config.storage.set('dc', this.config.dc)
-    //TODO There is disabled ability to change default DC
-    //NOTE Shouldn't we must reassign current networker/cachedNetworker?
-    console.log('[Error303] this.config.dc =', this.config.dc)
+    const newDcID = +matched[2]
+    if (newDcID === this.config.dc) return Promise.reject(err)
+    this.config.dc = newDcID
+    //delete this.config.networker
+    this.config.storage.set('dc', this.config.dc) // must be async call
+    if (this.config.fixupDc) this.config.fixupDc(newDcID)
+    console.log('[Error303] on exit this.config.dc =', this.config.dc)
     return this.performRequest()
   }
 
