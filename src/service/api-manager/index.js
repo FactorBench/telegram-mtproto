@@ -244,7 +244,7 @@ export class ApiManager {
       storage     : this.storage,
       getNetworker: this.mtpGetNetworker,
       netOpts     : options,
-      fixupDc: this.fixupDc.bind(this)
+      fixupDc: this.fixupDc
     }
     const req = new Request(cfg, method, params)
 

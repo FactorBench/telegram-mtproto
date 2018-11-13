@@ -97,7 +97,7 @@ const noDcAuth = ({ dcID, reject, apiSavedNet, apiRecall, deferResolve, invoke }
     invoke('auth.exportAuthorization', { dc_id: dcID }, { noErrorBox: true })
       .then(function({exportedAuth}) {
         console.log('[noDcAuth:3] for import:', { exportedAuth })
-        importAuth({ id, bytes }).then(function() {
+        importAuth(exportedAuth).then(function() {
           console.log('[noDcAuth:3.1] imported')
           exportDeferred.resolve()
         }, function(e) {
