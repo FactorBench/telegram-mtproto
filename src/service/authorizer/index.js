@@ -461,8 +461,9 @@ export const Auth = ({ Serialization, Deserialization }: TLFabric, { select, pre
       .then(mtpSendSetClientDhParams)
 
   function mtpAuth(dcID: number, cached: Cached, dcUrl: string) {
-    if (cached[dcID])
-      return cached[dcID].promise
+    console.log('[mtpAuth:0]', dcID, dcUrl, cached)
+    if (cached[dcID]) return cached[dcID].promise
+
     log('mtpAuth', 'dcID', 'dcUrl')(dcID, dcUrl)
     const nonce = []
     for (let i = 0; i < 16; i++)
@@ -479,6 +480,7 @@ export const Auth = ({ Serialization, Deserialization }: TLFabric, { select, pre
       deferred: blueDefer()
     }
 
+    console.log('[mtpAuth:1] start auth chain', auth)
     immediate(authChain, auth)
 
     cached[dcID] = auth.deferred

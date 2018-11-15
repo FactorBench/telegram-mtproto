@@ -72,31 +72,16 @@ const noDcAuth = ({ dcID, reject, apiSavedNet, apiRecall, deferResolve, invoke }
     { id, bytes },
     { dcID, noErrorBox: true })
 
-  console.log('[noDcAuth:1] check stored:', cachedExportPromise[dcID], isNil(cachedExportPromise[dcID]))
+  console.log('[noDcAuth:1] check stored:', cachedExportPromise[dcID], cachedExportPromise[dcID] === undefined)
+  console.log('[noDcAuth:1] check stored:', cachedExportPromise[`${dcID}`], cachedExportPromise[`${dcID}`] === undefined)
   console.log('[noDcAuth:1.1]', cachedExportPromise)
   if (isNil(cachedExportPromise[dcID])) {
     console.log('[noDcAuth:2] start to transfer authorization')
     const exportDeferred = blueDefer()
 
-                /* mtpInvokeApi('auth.exportAuthorization', {dc_id: dcID}, {noErrorBox: true}).then(function (exportedAuth) {
-                  mtpInvokeApi('auth.importAuthorization', {
-                    id: exportedAuth.id,
-                    bytes: exportedAuth.bytes
-                  }, {dcID: dcID, noErrorBox: true}).then(function () {
-                    exportDeferred.resolve()
-                  }, function (e) {
-                    exportDeferred.reject(e)
-                  })
-                }, function (e) {
-                  exportDeferred.reject(e)
-                })
-
-                cachedExportPromise[dcID] = exportDeferred.promise */
-
-
     invoke('auth.exportAuthorization', { dc_id: dcID }, { noErrorBox: true })
-      .then(function({exportedAuth}) {
-        console.log('[noDcAuth:3] for import:', { exportedAuth })
+      .then(function(exportedAuth) {
+        console.log('[noDcAuth:3] for import:', exportedAuth)
         importAuth(exportedAuth).then(function() {
           console.log('[noDcAuth:3.1] imported')
           exportDeferred.resolve()

@@ -114,7 +114,7 @@ export class ApiManager {
 
   networkSetter = (dc: number, options: LeftOptions) =>
     (authKey: Bytes, serverSalt: Bytes): Networker => {
-      console.log('[networkSetter] options:', options)
+      console.log('[networkSetter] options:', JSON.stringify(options))
       const networker = this.networkFabric(dc, authKey, serverSalt, options),
         cache = (options.fileUpload || options.fileDownload)
                 ? this.cache.uploader
@@ -125,81 +125,86 @@ export class ApiManager {
   mtpGetNetworker = async (dcID: number, options: LeftOptions = {}) => {
     if (!dcID) throw new Error('get Networker without dcID')
 
-    const isUpload = options.fileUpload || options.fileDownload
+    const isUpload = options.fileUpload || options.fileDownload || false
     const cache = isUpload ? this.cache.uploader : this.cache.downloader
     //const cache = this.cache.downloader
-    console.log('[MtpGetNetworker] dcID =', dcID, options)
-    console.log('[MtpGetNetworker] cached =', has(dcID, cache))
-    if (has(dcID, cache)) return cache[dcID]
-
-    const akk = `dc${  dcID  }_auth_key`
-    const ssk = `dc${  dcID  }_server_salt`
-
-    console.log('[MtpGetNetworker] upload:', options.fileDownload || options.fileUpload)
-    const dcUrl = this.chooseServer(dcID, options.fileDownload || options.fileUpload)
-    console.log('[MtpGetNetworker] dcUrl:', dcUrl)
+    console.log('[MtpGetNetworker:0] dcID:', dcID, JSON.stringify(options), isUpload)
+    console.log('[MtpGetNetworker:1] cache:', cache[dcID])
+    if (cache[dcID] !== undefined) return cache[dcID]
 
     const networkSetter = this.networkSetter(dcID, options)
+
+    const akk = `dc${dcID}_auth_key`
+    const ssk = `dc${dcID}_server_salt`
 
     const authKeyHex = await this.storage.get(akk)
     let serverSaltHex = await this.storage.get(ssk)
 
     if (cache[dcID]) return cache[dcID]
 
-    if (Ln(512, authKeyHex)) {
-      if (!serverSaltHex || serverSaltHex.length !== 16)
+    if (authKeyHex && authKeyHex.length == 512) {
+      if (!serverSaltHex || serverSaltHex.length != 16) {
         serverSaltHex = 'AAAAAAAAAAAAAAAA'
+      }
       const authKey = bytesFromHex(authKeyHex)
       const serverSalt = bytesFromHex(serverSaltHex)
 
-      return networkSetter(authKey, serverSalt)
+      console.log('[MtpGetNetworker:2] call network fabric:', dcID, authKey, serverSalt, JSON.stringify(options))
+      return cache[dcID] = this.networkFabric(dcID, authKey, serverSalt, options)
+      //return networkSetter(authKey, serverSalt)
     }
 
-    if (!options.createNetworker)
-      throw new AuthKeyError()
+    if (!options.createNetworker) throw new AuthKeyError()
 
+    console.log('[MtpGetNetworker:3] auth...')
     let auth
     try {
+      const dcUrl = this.chooseServer(dcID, options.fileDownload || options.fileUpload)
+      console.log('[MtpGetNetworker:4] dcUrl:', dcUrl)
       auth = await this.auth(dcID, this.cache.auth, dcUrl)
     } catch (error) {
       return netError(error)
     }
+    console.log('[MtpGetNetworker:5] auth passed')
 
     const { authKey, serverSalt } = auth
 
     await this.storage.set(akk, bytesToHex(authKey))
     await this.storage.set(ssk, bytesToHex(serverSalt))
 
-    return networkSetter(authKey, serverSalt)
+    //return networkSetter(authKey, serverSalt)
+    console.log('[MtpGetNetworker:6] call network fabric:', dcID, authKey, serverSalt, JSON.stringify(options))
+    return cache[dcID] = this.networkFabric(dcID, authKey, serverSalt, options)
   }
   async initConnection() {
-    console.log('[initConnection] check exists any networker:', !isAnyNetworker(this))
-    console.log('[initConnection] networkers:', this.cache)
-    if (!isAnyNetworker(this)) {
+    const existsNetworkers = isAnyNetworker(this)
+    console.log('[initConnection] check exists any networker:', existsNetworkers)
+    console.log('[initConnection] networkers:', Object.keys(this.cache.downloader))
+    if (!existsNetworkers) {
       const storedBaseDc = await this.storage.get('dc')
-      console.log('[initConnection] stored default dc id:', storedBaseDc, '. While default from settings:', this.baseDcID)
+      console.log('[initConnection] got dc:', storedBaseDc, ', default:', this.baseDcID)
       const baseDc = storedBaseDc || this.baseDcID
       const opts = {
         dcID: baseDc,
         createNetworker: true
       }
       const networker = await this.mtpGetNetworker(baseDc, opts)
-      const nearestDc = await networker.wrapApiCall(
-        'help.getNearestDc', {}, opts)
-      console.log('[initConnection] help.getNearestDc:', nearestDc)
+      const nearestDc = await networker.wrapApiCall('help.getNearestDc', {}, opts)
       const { nearest_dc, this_dc } = nearestDc
+      console.log('[initConnection] help.getNearestDc:', nearest_dc, this_dc)
       await this.storage.set('dc', nearest_dc)
-      this.baseDcID = nearest_dc
+      //this.baseDcID = nearest_dc
       debug(`nearest Dc`)('%O', nearestDc)
       console.log('[initConnection] is nearest is not this:', nearest_dc !== this_dc)
       if (nearest_dc !== this_dc) {
-        console.log('[initConnection] if nearest_dc != this_dc. create networker for dcID', nearest_dc)
+        console.log('[initConnection] if nearest_dc!=this_dc then create networker for dcID', nearest_dc)
         await this.mtpGetNetworker(nearest_dc, { createNetworker: true })
       }
     }
   }
   mtpInvokeApi = async (method: string, params: Object, options: LeftOptions = {}) => {
-    console.log('[mtpInvokeApi]', method, params, options)
+    console.log('[mtpInvokeApi]', method, JSON.stringify(params), JSON.stringify(options))
+    if (!options.dcID) options.dcID = this.baseDcID
     const deferred = blueDefer()
     const rejectPromise = (error: any) => {
       let err
@@ -231,10 +236,13 @@ export class ApiManager {
     const requestThunk = waitTime => delayedCall(req.performRequest, +waitTime * 1e3)
 
     const dcID = options.dcID
-      ? options.dcID
-      : await this.storage.get('dc')
+      ? options.dcID || this.baseDcID
+      : await this.storage.get('dc') || 2
 
-    console.log('[mtpInvokeApi] get networker with dcID', dcID, ' and options', options)
+    /*
+     ! add dc to options??
+     */
+    console.log('[mtpInvokeApi] get networker with dcID', dcID, ' and options', JSON.stringify(options))
     const networker = await this.mtpGetNetworker(dcID, options)
     console.log('[mtpInvokeApi] got networker:', networker)
 

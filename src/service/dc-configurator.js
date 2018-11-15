@@ -35,7 +35,7 @@ export const chooseServer = (
   console.log('[chooseServer:0] chosenServers:', chosenServers)
   const choosen = prop(dcID)
   if (has(dcID, chosenServers)) {
-    console.log('[chooseServer:1] choosen:', choosen(chooseServers))
+    console.log('[chooseServer:1] choosen:', choosen(chosenServers))
     return choosen(chosenServers)
   }
   
@@ -56,6 +56,6 @@ export const chooseServer = (
   }
   chosenServers[dcID] = chosenServer
 
-  console.log('[chooseServer:4] choosen:', choosen(chooseServers))
+  console.log('[chooseServer:4] choosen:', choosen(chosenServers))
   return choosen(chosenServers)
 }
