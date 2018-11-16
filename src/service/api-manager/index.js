@@ -162,10 +162,12 @@ export class ApiManager {
       const dcUrl = this.chooseServer(dcID, options.fileDownload || options.fileUpload)
       console.log('[MtpGetNetworker:4] dcUrl:', dcUrl)
       auth = await this.auth(dcID, this.cache.auth, dcUrl)
+      console.log('[MtpGetNetworker:5] auth completed:', auth)
+      this.baseDcID = dcID
     } catch (error) {
       return netError(error)
     }
-    console.log('[MtpGetNetworker:5] auth passed')
+    console.log('[MtpGetNetworker:6] auth passed')
 
     const { authKey, serverSalt } = auth
 
@@ -173,13 +175,12 @@ export class ApiManager {
     await this.storage.set(ssk, bytesToHex(serverSalt))
 
     //return networkSetter(authKey, serverSalt)
-    console.log('[MtpGetNetworker:6] call network fabric:', dcID, authKey, serverSalt, JSON.stringify(options))
+    console.log('[MtpGetNetworker:7] call network fabric:', dcID, authKey, serverSalt, JSON.stringify(options))
     return cache[dcID] = this.networkFabric(dcID, authKey, serverSalt, options)
   }
   async initConnection() {
     const existsNetworkers = isAnyNetworker(this)
-    console.log('[initConnection] check exists any networker:', existsNetworkers)
-    console.log('[initConnection] networkers:', Object.keys(this.cache.downloader))
+    console.log('[initConnection] check exists any networker:', existsNetworkers, Object.keys(this.cache.downloader))
     if (!existsNetworkers) {
       const storedBaseDc = await this.storage.get('dc')
       console.log('[initConnection] got dc:', storedBaseDc, ', default:', this.baseDcID)
@@ -204,7 +205,7 @@ export class ApiManager {
   }
   mtpInvokeApi = async (method: string, params: Object, options: LeftOptions = {}) => {
     console.log('[mtpInvokeApi]', method, JSON.stringify(params), JSON.stringify(options))
-    if (!options.dcID) options.dcID = this.baseDcID
+    if (!options.dcID) options.dcID = await this.storage.get('dc') || this.baseDcID
     const deferred = blueDefer()
     const rejectPromise = (error: any) => {
       let err
@@ -256,7 +257,6 @@ export class ApiManager {
     }
     const req = new Request(cfg, method, params)
 
-
     req.performRequest()
       .then(
         deferred.resolve,
@@ -287,6 +287,7 @@ export class ApiManager {
       user_auth: fullUserAuth
     })
     this.emit('auth.dc', { dc: dcID, auth: userAuth })
+    this.baseDcID = dcID
   }
   async mtpClearStorage() {
     const saveKeys = []
