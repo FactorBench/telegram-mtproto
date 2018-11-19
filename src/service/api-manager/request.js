@@ -69,24 +69,6 @@ class Request {
       .catch({ code: 420 }, this.error420)
   }
 
-  /*
-if (error.code == 303) {
-              var newDcID = error.type.match(/^(PHONE_MIGRATE_|NETWORK_MIGRATE_|USER_MIGRATE_)(\d+)/)[2]
-              if (newDcID != dcID) {
-                if (options.dcID) {
-                  options.dcID = newDcID
-                } else {
-                  Storage.set({dc: baseDcID = newDcID})
-                }
-
-                mtpGetNetworker(newDcID, options).then(function (networker) {
-                  networker.wrapApiCall(method, params, options).then(function (result) {
-                    deferred.resolve(result)
-                  }, rejectPromise)
-                }, rejectPromise)
-              }
-            }
-  */
   async error303(err: MTError) {
     console.log('[Error303]', err)
     console.log('[Error303] on enter this.config.dc =', this.config.dc)
