@@ -59,43 +59,24 @@ const matchProtect =
 
 
 const noBaseAuth = ({ emit, throwNext, storage }) => {
-  console.log('[noBaseAuth]')
   storage.remove('dc', 'user_auth')
   emit('error.401.base')
   throwNext()
 }
 
 const noDcAuth = ({ dcID, reject, apiSavedNet, apiRecall, deferResolve, invoke }) => {
-  console.log('[noDcAuth:0]', { dcID })
   const importAuth = ({ id, bytes }) => invoke(
     'auth.importAuthorization',
     { id, bytes },
     { dcID, noErrorBox: true })
 
-  console.log('[noDcAuth:1] check stored:', cachedExportPromise[dcID], cachedExportPromise[dcID] === undefined)
-  console.log('[noDcAuth:1] check stored:', cachedExportPromise[`${dcID}`], cachedExportPromise[`${dcID}`] === undefined)
-  console.log('[noDcAuth:1.1]', cachedExportPromise)
   if (isNil(cachedExportPromise[dcID])) {
-    console.log('[noDcAuth:2] start to transfer authorization')
     const exportDeferred = blueDefer()
 
     invoke('auth.exportAuthorization', { dc_id: dcID }, { noErrorBox: true })
-      .then(function(exportedAuth) {
-        console.log('[noDcAuth:3] for import:', exportedAuth)
-        importAuth(exportedAuth).then(function() {
-          console.log('[noDcAuth:3.1] imported')
-          exportDeferred.resolve()
-        }, function(e) {
-          console.log('[noDcAuth:3.2] import failed:', e)
-          exportDeferred.reject(e)
-        })
-      }, function(e) {
-        console.log('[noDcAuth:4] export failed:', e)
-        exportDeferred.reject(e)
-      })
-      //.then(importAuth)
-      //.then(exportDeferred.resolve)
-      //.catch(exportDeferred.reject)
+      .then(importAuth)
+      .then(exportDeferred.resolve)
+      .catch(exportDeferred.reject)
 
     cachedExportPromise[dcID] = exportDeferred.promise
   }
