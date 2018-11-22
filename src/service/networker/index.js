@@ -195,9 +195,11 @@ export class NetworkerThread {
   }
 
   wrapApiCall(method: string, params: Object, options: NetOptions) {
-    console.log('[WrapApiCall]', method, params, options)
+    console.log('[WrapApiCall:0]', method, params, JSON.stringify(options))
+    console.log('[WrapApiCall:1] appConfig:', JSON.stringify(this.appConfig))
     const serializer = this.Serialization(options)
     const serialBox = serializer.writer
+    console.log('[WrapApiCall:2] connectionInited:', this.connectionInited)
     if (!this.connectionInited) {
       // serializer.storeInt(0xda9b0d0d, 'invokeWithLayer')
       // serializer.storeInt(Config.Schema.API.layer, 'layer')
@@ -217,6 +219,7 @@ export class NetworkerThread {
     }
 
     options.resultType = serializer.storeMethod(method, params)
+    console.log('[WrapApiCall:3] options:', JSON.stringify(options))
 
     const seqNo = this.generateSeqNo()
     const message = new NetMessage(

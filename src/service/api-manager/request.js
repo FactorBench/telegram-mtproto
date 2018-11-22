@@ -55,7 +55,7 @@ class Request {
   saveNetworker = (networker: NetworkerType) => this.config.networker = networker
   
   performRequest = () => {
-    console.log('[PerformRequest] this.config.dc = ', this.config.dc)
+    console.log('[performRequest] this.config.dc = ', this.config.dc)
     return this.initNetworker().then(this.requestWith)
   }
   
@@ -69,25 +69,7 @@ class Request {
       .catch({ code: 420 }, this.error420)
   }
 
-  /*
-if (error.code == 303) {
-              var newDcID = error.type.match(/^(PHONE_MIGRATE_|NETWORK_MIGRATE_|USER_MIGRATE_)(\d+)/)[2]
-              if (newDcID != dcID) {
-                if (options.dcID) {
-                  options.dcID = newDcID
-                } else {
-                  Storage.set({dc: baseDcID = newDcID})
-                }
-
-                mtpGetNetworker(newDcID, options).then(function (networker) {
-                  networker.wrapApiCall(method, params, options).then(function (result) {
-                    deferred.resolve(result)
-                  }, rejectPromise)
-                }, rejectPromise)
-              }
-            }
-  */
-  error303(err: MTError) {
+  async error303(err: MTError) {
     console.log('[Error303]', err)
     console.log('[Error303] on enter this.config.dc =', this.config.dc)
     const matched = err.type.match(/^(PHONE_MIGRATE_|NETWORK_MIGRATE_|USER_MIGRATE_)(\d+)/)
@@ -96,13 +78,13 @@ if (error.code == 303) {
     if (newDcID === this.config.dc) return Promise.reject(err)
     this.config.dc = newDcID
     //delete this.config.networker
-    this.config.storage.set('dc', this.config.dc) // must be async call
+    await this.config.storage.set('dc', this.config.dc) // must be async call
     if (this.config.fixupDc) this.config.fixupDc(newDcID)
     console.log('[Error303] on exit this.config.dc =', this.config.dc)
     return this.performRequest()
   }
 
-  error420(err: MTError) {
+  async error420(err: MTError) {
     console.log('[Error420]', err)
     const matched = err.type.match(/^FLOOD_WAIT_(\d+)/)
     if (!matched || matched.length < 2) return Promise.reject(err)
